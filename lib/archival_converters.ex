@@ -1,6 +1,6 @@
 defmodule ArchivalConverters do
     def main(["doc-to-pdfa", path | _]) do
-        System.cmd "cscript.exe" ["doc_to_pdfa.js" | ArchivalConverters.recursive_ls(path) |>
+        System.cmd "cscript" ["doc_to_pdfa.js" | ArchivalConverters.recursive_ls(path) |>
             Enum.filter(&ArchivalConverters.path_is_perhaps_office_file(&1))]
     end
 
