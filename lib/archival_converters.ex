@@ -1,18 +1,22 @@
 defmodule ArchivalConverters do
+    @moduledoc false
+    alias ArchivalConverters.Fileutils
+    alias ArchivalConverters.Siard
+
     def main(["doc-to-pdfa", path | _]) do
-        IO.inspect find_files(path)
-        IO.inspect System.cmd(Path.absname("lib\\doc_to_pdfa.js"), find_files(path))
+        System.cmd(Path.absname("lib\\doc_to_pdfa.js"), find_files(path))
     end
 
     def find_files(path) do
-        ArchivalConverters.Fileutils.recursive_ls(path) |>
-            Enum.filter(&ArchivalConverters.Fileutils.path_is_perhaps_office_file(&1)) |>
+        path |>
+            Fileutils.recursive_ls |>
+            Enum.filter(&Fileutils.path_is_perhaps_office_file(&1)) |>
             Enum.filter(fn(p) -> String.ends_with?(p, "doc") end) |>
             Enum.map(fn(p) -> String.replace(p, "/", "\\") end)
     end
 
     def main(["update-siard", siard_path, yaml_path | _]) do
-        ArchivalConverters.Siard.update_header(siard_path, yaml_path)
+        Siard.update_header(siard_path, yaml_path)
     end
 
     def main(args) do

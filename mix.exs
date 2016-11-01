@@ -27,7 +27,13 @@ defmodule ArchivalConverters.Mixfile do
   #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
   #
   # Type "mix help deps" for more examples and options
+
   defp deps do
-    [{:yaml_elixir, git: "https://github.com/KamilLelonek/yaml-elixir"}]
+      [
+          {:dogma, "~> 0.1", only: :dev},
+          {:credo, "~> 0.4", only: [:dev, :test]},
+          {:yaml_elixir, git: "https://github.com/KamilLelonek/yaml-elixir"},
+          {:erlsom, git: "https://github.com/willemdj/erlsom"}
+      ]
   end
 end
