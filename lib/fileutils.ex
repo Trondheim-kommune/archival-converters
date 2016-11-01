@@ -20,9 +20,7 @@ defmodule ArchivalConverters.Fileutils do
     defp is_filetype(data, type) do
         case detect_filetype(data) do
             {:ok, filetype} -> filetype == type
-            {:error, _} ->
-                IO.puts("Cannot recognize filetype for: #{path}")
-                false
+            {:error, _} -> false
         end
     end
 

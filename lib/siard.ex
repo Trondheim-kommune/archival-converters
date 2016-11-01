@@ -32,24 +32,21 @@ defmodule ArchivalConverters.Siard do
         end
     end
 
-    defp get_description(map) do
-        Map.get(map, "description")
-    end
+    # defp get_description(map) do
+    #    Map.get(map, "description")
+    # end
 
-    defp tables_with_updates(map) do
-        Enum.filter(Map.get(map, "tables"), &get_description/1)
-    end
+    # defp tables_with_updates(map) do
+    #     Enum.filter(Map.get(map, "tables"), &get_description/1)
+    # end
 
-    def update_field(%{"name" => name, "description" => description}, xml_tree) do
-    end
+    # def update_field(%{"name" => name, "description" => description}, xml_tree) do
+    # end
 
-    def update_table(%{"name" => name, "description" => description, "fields" => fields} = map,
-                     xml_tree) do
-        Enum.each(fields, &update_field(&1, xml_tree))
-    end
-
-    def update_schema do
-    end
+    # def update_table(%{"name" => name, "description" => description, "fields" => fields} = map,
+    #                 xml_tree) do
+    #    Enum.each(fields, &update_field(&1, xml_tree))
+    # end
 
     def update_metadata(path, descriptions) do
         case :erlsom.compile_xsd_file(Path.join(path, @metadata_xsd)) do
@@ -61,13 +58,16 @@ defmodule ArchivalConverters.Siard do
                  _undefined2, _undefined3, {:schemasType, [], schemas}, _users, _roles,
                  _privileges} = result
                 IO.puts "Writing metadata.xml"
+                Enum.each(descriptions, fn (description) ->
+                              description
+                          end)
                 # File.write!(Path.join(path, @metadata_xml), :erlsom.write(result, model))
                 System.halt(1)
-              something ->
+              _ ->
                 IO.puts "Failed to scan #{@metadata_xml} using model #{@metadata_xsd} from: #{path}"
                 System.halt(1)
             end
-          something ->
+          _ ->
             IO.puts "Failed to compile #{@metadata_xsd} file from: #{path}"
             System.halt(1)
         end
