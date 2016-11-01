@@ -32,36 +32,59 @@ defmodule ArchivalConverters.Siard do
         end
     end
 
-    # defp get_description(map) do
-    #    Map.get(map, "description")
-    # end
+    defp update_tables_metadata(_, tables) do
+        tables
+    end
 
-    # defp tables_with_updates(map) do
-    #     Enum.filter(Map.get(map, "tables"), &get_description/1)
-    # end
+    defp update_views_metadata(_, views) do
+        views
+    end
 
-    # def update_field(%{"name" => name, "description" => description}, xml_tree) do
-    # end
+    defp update_routines_metadata(_, routines) do
+        routines
+    end
 
-    # def update_table(%{"name" => name, "description" => description, "fields" => fields} = map,
-    #                 xml_tree) do
-    #    Enum.each(fields, &update_field(&1, xml_tree))
-    # end
+    defp write_metadata_xml(metadata, model, path) do
+      IO.puts "Writing metadata.xml"
+      File.write!(path, :erlsom.write(metadata, model))
+    end
 
-    def update_metadata(path, descriptions) do
+    def update_metadata(schemas_update, schemas) when is_list schemas do
+      Enum.reduce(schemas_update, schemas, fn(schema_update, schemas) ->
+                  schema_index = Enum.find_index(schemas,
+                      fn({:schemaType, [], schema_name, _, _, _, _, _, _}) ->
+                          Map.get(schema_update, "name") == to_string schema_name
+                      end
+                  )
+                  {:schemaType, [], schema_name, schema_loc, unkown_1, unkown_2, tables, views,
+                   routines} = Enum.fetch!(schemas, schema_index)
+                  List.replace_at(schemas, schema_index,
+                      {:schemaType, [], schema_name, schema_loc, unkown_1, unkown_2,
+                       update_tables_metadata(Map.get(schema_update, "tables"), tables),
+                       update_views_metadata(Map.get(schema_update, "views"), views),
+                       update_routines_metadata(Map.get(schema_update, "routines"), routines)}
+                  )
+              end)
+    end
+
+    def update_metadata(deposit_update, {:siardArchive, xsd_loc, xsd_version, name, meta1,
+        meta2, meta3, meta4, meta5, something, tool, creation_date, undefined1,
+        creation_host, system_db, undefined2, undefined3, {:schemasType, [], schemas},
+        users, roles, privileges}) do
+        {:siardArchive, xsd_loc, xsd_version, name, meta1, meta2, meta3, meta4,
+         meta5, something, tool, creation_date, undefined1, creation_host, system_db,
+         undefined2, undefined3, {:schemasType, [],
+         update_metadata(Map.get(deposit_update, "schemas"), schemas)}, users, roles, privileges}
+    end
+
+    def update_metadata(path, deposit_description) do
         case :erlsom.compile_xsd_file(Path.join(path, @metadata_xsd)) do
           {:ok, model} ->
             case :erlsom.scan(File.read!(Path.join(path, @metadata_xml)), model) do
               {:ok, result, _} ->
-                {:siardArchive, _xsd_loc, _xsd_version, _name, _meta1, _meta2, _meta3, _meta4,
-                 _meta5, _something, _tool, _creation_date, _undefined1, _creation_host, _system_db,
-                 _undefined2, _undefined3, {:schemasType, [], schemas}, _users, _roles,
-                 _privileges} = result
-                IO.puts "Writing metadata.xml"
-                Enum.each(descriptions, fn (description) ->
-                              description
-                          end)
-                # File.write!(Path.join(path, @metadata_xml), :erlsom.write(result, model))
+                deposit_description |>
+                    update_metadata(result) |>
+                    write_metadata_xml(model, Path.join(path, @metadata_xml))
                 System.halt(1)
               _ ->
                 IO.puts "Failed to scan #{@metadata_xml} using model #{@metadata_xsd} from: #{path}"
