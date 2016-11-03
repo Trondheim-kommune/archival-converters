@@ -46,7 +46,13 @@ defmodule ArchivalConverters.Siard do
 
     defp write_metadata_xml(metadata, model, path) do
       IO.puts "Writing metadata.xml"
-      File.write!(path, :erlsom.write(metadata, model))
+      case :erlsom.write(metadata, model) do
+        {:ok, xml} ->
+            File.write!(path, :xmerl_ucs.to_utf8(xml))
+        _ ->
+            IO.puts("metadata doesn't match model after edit")
+            System.halt(1)
+      end
     end
 
     def update_metadata(schemas_update, schemas) when is_list schemas do
@@ -80,19 +86,23 @@ defmodule ArchivalConverters.Siard do
     def update_metadata(path, deposit_description) do
         case :erlsom.compile_xsd_file(Path.join(path, @metadata_xsd)) do
           {:ok, model} ->
-            case :erlsom.scan(File.read!(Path.join(path, @metadata_xml)), model) do
-              {:ok, result, _} ->
-                deposit_description |>
-                    update_metadata(result) |>
-                    write_metadata_xml(model, Path.join(path, @metadata_xml))
-                System.halt(1)
-              _ ->
-                IO.puts "Failed to scan #{@metadata_xml} using model #{@metadata_xsd} from: #{path}"
-                System.halt(1)
-            end
+            update_metadata(path, model, deposit_description)
           _ ->
             IO.puts "Failed to compile #{@metadata_xsd} file from: #{path}"
             System.halt(1)
+        end
+    end
+
+    def update_metadata(path, model, deposit_description) do
+        case :erlsom.scan(File.read!(Path.join(path, @metadata_xml)), model) do
+            {:ok, result, _} ->
+                deposit_description |>
+                update_metadata(result) |>
+                write_metadata_xml(model, Path.join(path, @metadata_xml))
+                System.halt(1)
+            _ ->
+                IO.puts "Failed to scan #{@metadata_xml} using model #{@metadata_xsd} from: #{path}"
+                System.halt(1)
         end
     end
 end
