@@ -48,7 +48,10 @@ defmodule ArchivalConverters.Siard do
       IO.puts "Writing metadata.xml"
       case :erlsom.write(metadata, model) do
         {:ok, xml} ->
-            File.write!(path, :xmerl_ucs.to_utf8(xml))
+            File.write!(path,
+                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+                <> to_string :erlsom_lib.prettyPrint(xml)
+            )
         _ ->
             IO.puts("metadata doesn't match model after edit")
             System.halt(1)
