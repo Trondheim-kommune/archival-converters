@@ -43,7 +43,7 @@ defmodule ArchivalConverters.Fileutils do
 
     def extract_archive(archive_path, extract_path, output_path) do
         IO.puts "Extracting archive"
-        System.cmd("7z", ["x", archive_path, extract_path, "-aou", "-o#{output_path}"])
+        System.cmd("7z", ["x", archive_path, extract_path, "-aoa", "-o#{output_path}"])
         Path.absname(Path.join(output_path, extract_path))
     end
 
